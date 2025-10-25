@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather App</title>
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  overflow-y: auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  position: relative;
+  transition: background 0.5s;
+  background: linear-gradient(to top, #0f2027, #203a43, #2c5364);
+}
+
+h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+  z-index: 2;
+  position: relative;
+}
+
+/* Hamburger menu */
+.menu {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 3;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 22px;
+}
+
+.menu div {
+  height: 4px;
+  background-color: #fff;
+  border-radius: 2px;
+  transition: 0.3s;
+}
+
+/* Dropdown panel */
+.panel {
+  position: fixed;
+  top: 60px;
+  right: 20px;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  padding: 10px 20px;
+  border-radius: 10px;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 3;
+}
+
+.panel button {
+  background: #ffb74d;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #1e1e1e;
+  transition: 0.3s;
+}
+
+.panel button:hover {
+  background: #ffa726;
+}
+
+.weather-info {
+  text-align: center;
+  margin-bottom: 30px;
+  z-index: 2;
+  position: relative;
+}
+
+.weather-info .temp {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.weather-info .condition,
+.weather-info .humidity {
+  font-size: 1.4rem;
+  margin-bottom: 5px;
+}
+
+.forecast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 450px;
+  width: 100%;
+  z-index: 2;
+  position: relative;
+}
+
+.forecast-item {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  padding: 15px 20px;
+  border-radius: 15px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+/* City management page */
+.city-manager {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px;
+  z-index: 5;
+  overflow-y: auto;
+}
+
+.city-manager h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.city-manager input {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  margin-right: 10px;
+}
+
+.city-manager button {
+  padding: 10px 15px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background: #ffb74d;
+  color: #1e1e1e;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.city-manager button:hover {
+  background: #ffa726;
+}
+
+.city-list {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.city-item {
+  background: rgba(255,255,255,0.2);
+  padding: 10px 15px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Carousel arrows - professional transparent style */
+.city-carousel {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.carousel-btn {
+  pointer-events: all;
+  background: rgba(255, 255, 255, 0.15); /* transparent look */
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  padding: 15px 20px;
+  border-radius: 50%;
+  font-size: 2rem;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+  transition: 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  backdrop-filter: blur(5px);
+}
+
+.carousel-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  color: #fff;
+}
+
+#currentCityName {
+  pointer-events: none;
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  flex: 1;
+}
+
+/* Rain Animation */
+.rain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.drop {
+  position: absolute;
+  width: 2px;
+  height: 15px;
+  background: #a3d4ff;
+  opacity: 0.5;
+  animation: fall linear infinite;
+}
+
+@keyframes fall {
+  0% { transform: translateY(-20px); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Sun */
+.sun {
+  position: fixed;
+  top: 50px;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, #fff200 0%, #ffb800 70%);
+  box-shadow: 0 0 50px #fff200;
+  z-index: 0;
+}
+
+/* Clouds only near sun */
+.cloud, .cloud2, .cloud3 {
+  position: fixed;
+  background: rgba(255,255,255,0.35);
+  border-radius: 50%;
+  filter: blur(25px);
+  z-index: 1;
+  top: 50px;
+  display: none;
+}
+
+.cloud {
+  width: 350px;
+  height: 120px;
+  left: 50%;
+  margin-left: -175px;
+  animation: drift 80s linear infinite;
+}
+
+.cloud2 {
+  width: 300px;
+  height: 110px;
+  left: 55%;
+  margin-left: -150px;
+  background: rgba(255,255,255,0.3);
+  filter: blur(22px);
+  animation: drift 100s linear infinite;
+}
+
+.cloud3 {
+  width: 250px;
+  height: 90px;
+  left: 45%;
+  margin-left: -125px;
+  background: rgba(255,255,255,0.28);
+  filter: blur(20px);
+  animation: drift 120s linear infinite;
+}
+
+@keyframes drift {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+  100% { transform: translateX(0); }
+}
+</style>
+</head>
+<body>
+
+<h1 id="mainTitle">City Name</h1>
+
+<!-- Hamburger Menu -->
+<div class="menu" id="menu">
+  <div></div>
+  <div></div>
+  <div></div>
+</div>
+
+<!-- Dropdown panel -->
+<div class="panel" id="panel">
+  <button id="editButton">Manage Cities</button>
+</div>
+
+<!-- Weather info -->
+<div class="weather-info" id="weatherInfo">
+  <div class="temp" id="temp">-- °C</div>
+  <div class="condition" id="condition">--</div>
+  <div class="humidity" id="humidity">Humidity: --%</div>
+</div>
+
+<h2>Forecast</h2>
+<div class="forecast" id="forecast"></div>
+
+<!-- Carousel arrows -->
+<div class="city-carousel">
+  <button class="carousel-btn" id="prevBtn">&#8592;</button>
+  <span id="currentCityName">City Name</span>
+  <button class="carousel-btn" id="nextBtn">&#8594;</button>
+</div>
+
+<!-- Rain and Sun -->
+<div id="rainContainer" class="rain"></div>
+<div id="sun" class="sun"></div>
+
+<!-- Clouds -->
+<div class="cloud"></div>
+<div class="cloud2"></div>
+<div class="cloud3"></div>
+
+<!-- City management page -->
+<div class="city-manager" id="cityManager">
+  <h2>Manage Cities</h2>
+  <div>
+    <input type="text" id="newCityInput" placeholder="Add new city">
+    <button id="addCityBtn">Add City</button>
+  </div>
+  <div class="city-list" id="cityList"></div>
+  <button id="closeCityManager">Close</button>
+</div>
+
+<script>
+// Elements
+const mainTitle = document.getElementById('mainTitle');
+const temp = document.getElementById('temp');
+const condition = document.getElementById('condition');
+const humidity = document.getElementById('humidity');
+const forecastContainer = document.getElementById('forecast');
+const rainContainer = document.getElementById('rainContainer');
+const sun = document.getElementById('sun');
+const clouds = document.querySelectorAll('.cloud, .cloud2, .cloud3');
+
+const menu = document.getElementById('menu');
+const panel = document.getElementById('panel');
+const cityManager = document.getElementById('cityManager');
+const editButton = document.getElementById('editButton');
+const closeCityManager = document.getElementById('closeCityManager');
+const addCityBtn = document.getElementById('addCityBtn');
+const newCityInput = document.getElementById('newCityInput');
+const cityList = document.getElementById('cityList');
+const currentCityName = document.getElementById('currentCityName');
+
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+// Hamburger menu toggle
+menu.addEventListener('click', () => {
+  panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+});
+
+// City management
+let cities = ["Your Location"];
+let currentIndex = 0;
+
+editButton.addEventListener('click', () => {
+    cityManager.style.display = 'flex';
+    panel.style.display = 'none';
+});
+closeCityManager.addEventListener('click', () => cityManager.style.display = 'none');
+
+addCityBtn.addEventListener('click', () => {
+    const city = newCityInput.value.trim();
+    if(city) {
+        cities.push(city);
+        newCityInput.value = '';
+        renderCityList();
+        currentIndex = cities.length -1;
+        updateWeather(cities[currentIndex]);
+        cityManager.style.display = 'none';
+    }
+});
+
+function renderCityList() {
+    cityList.innerHTML = '';
+    cities.forEach((city,index)=>{
+        const div = document.createElement('div');
+        div.classList.add('city-item');
+        div.textContent = city;
+        div.addEventListener('click', ()=>{
+            currentIndex = index;
+            updateWeather(city);
+            cityManager.style.display = 'none';
+        });
+        cityList.appendChild(div);
+    });
+}
+
+// Carousel navigation
+prevBtn.addEventListener('click', ()=>{
+    currentIndex = (currentIndex -1 + cities.length)%cities.length;
+    updateWeather(cities[currentIndex]);
+});
+nextBtn.addEventListener('click', ()=>{
+    currentIndex = (currentIndex +1)%cities.length;
+    updateWeather(cities[currentIndex]);
+});
+
+// Mock weather data
+function getMockWeather(city) {
+    const temps = [22, 25, 28, 30, 20];
+    const conditions = ["Sunny", "Cloudy", "Rainy", "Stormy", "Clear"];
+    const humidities = [50,60,70,80,65];
+    const index = Math.floor(Math.random()*temps.length);
+    return {temp:temps[index], weather:conditions[index], humidity:humidities[index]};
+}
+
+function getMockForecast() {
+    const days = ["Mon","Tue","Wed","Thu","Fri"];
+    const forecasts = [];
+    for(let i=0;i<days.length;i++){
+        const data=getMockWeather();
+        forecasts.push({day:days[i], temp:data.temp, weather:data.weather});
+    }
+    return forecasts;
+}
+
+function updateWeather(city) {
+    mainTitle.textContent = city;
+    currentCityName.textContent = city;
+    const data = getMockWeather(city);
+    temp.textContent = `${data.temp} °C`;
+    condition.textContent = data.weather;
+    humidity.textContent = `Humidity: ${data.humidity}%`;
+
+    rainContainer.innerHTML = '';
+    sun.style.display = 'none';
+    clouds.forEach(c=>c.style.display='none');
+
+    if(data.weather==="Rainy"||data.weather==="Stormy"){
+        for(let i=0;i<100;i++){
+            const drop = document.createElement('div');
+            drop.className='drop';
+            drop.style.left = Math.random()*100 + 'vw';
+            drop.style.animationDuration = (0.5+Math.random()*1)+'s';
+            drop.style.opacity = 0.3 + Math.random()*0.7;
+            rainContainer.appendChild(drop);
+        }
+    } else if(data.weather==="Sunny"||data.weather==="Clear"){
+        sun.style.display='block';
+    } else if(data.weather==="Cloudy"){
+        clouds.forEach(c=>c.style.display='block');
+        sun.style.display='block';
+    }
+
+    const forecastData = getMockForecast();
+    forecastContainer.innerHTML='';
+    forecastData.forEach(item=>{
+        const div=document.createElement('div');
+        div.classList.add('forecast-item');
+        div.innerHTML=`<span>${item.day}</span> <span>${item.temp}°C ${item.weather}</span>`;
+        forecastContainer.appendChild(div);
+    });
+}
+
+// Initialize
+renderCityList();
+updateWeather(cities[currentIndex]);
+</script>
+
+</body>
+</html>
